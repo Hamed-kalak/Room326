@@ -1,3 +1,3 @@
-from . import let_it_snow
+import let_it_snow
 
-let_it_snow.main()
+snowflake.let_it_snow.main(3, "black")
