@@ -4,14 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hamed Mirbagheri — Personal Atlas</title>
-  <meta name="description" content="The personal brand site of Hamed Mirbagheri. Not a website — a map. Navigate with your arrow keys.">
+  <meta name="description" content="The personal brand site of Hamed Mirbagheri. Not a website — a map. Pick a door and explore.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fff8f1'/%3E%3Cg fill='none' stroke='%23006eff' stroke-width='1.5'%3E%3Crect x='3' y='3' width='8' height='8'/%3E%3Crect x='12' y='3' width='8' height='8'/%3E%3Crect x='21' y='3' width='8' height='8'/%3E%3Crect x='3' y='12' width='8' height='8'/%3E%3Crect x='21' y='12' width='8' height='8'/%3E%3Crect x='3' y='21' width='8' height='8'/%3E%3Crect x='12' y='21' width='8' height='8'/%3E%3Crect x='21' y='21' width='8' height='8'/%3E%3C/g%3E%3Crect x='12' y='12' width='8' height='8' fill='%23006eff'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body data-room="home">
+
+  <!-- ══════════ Ambient layers: drifting blur blobs + particles ══════════ -->
+  <div class="fx-blobs" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+  <canvas id="particles" aria-hidden="true"></canvas>
+
+  <!-- Soft blur vignette around the hero (active on Home) -->
+  <div class="edge-blur" aria-hidden="true"></div>
 
   <!-- ══════════════════════ HUD (fixed chrome) ══════════════════════ -->
   <header class="hud hud-top">
@@ -20,35 +31,56 @@
   </header>
 
   <footer class="hud hud-bottom">
-    <div class="hud-left">
-      <div class="sector" aria-hidden="true">
-        <span class="sector-label">Sector</span>
-        <span class="sector-value" id="sector">B2</span>
-        <span class="sector-room" id="sector-room">Home</span>
-      </div>
-      <div class="keys-hint" aria-hidden="true">Arrow&nbsp;keys&nbsp;/&nbsp;WASD</div>
+    <div class="sector" aria-hidden="true">
+      <span class="sector-label">Sector</span>
+      <span class="sector-value" id="sector">HQ</span>
+      <span class="sector-room" id="sector-room">Home</span>
     </div>
-
-    <div class="dpad" role="group" aria-label="Navigate the map">
-      <button class="dpad-btn dpad-up"    data-move="up"    aria-label="Go north">↑</button>
-      <button class="dpad-btn dpad-left"  data-move="left"  aria-label="Go west">←</button>
-      <button class="dpad-btn dpad-home"  data-move="home"  aria-label="Return home">●</button>
-      <button class="dpad-btn dpad-right" data-move="right" aria-label="Go east">→</button>
-      <button class="dpad-btn dpad-down"  data-move="down"  aria-label="Go south">↓</button>
-    </div>
+    <div class="keys-hint" aria-hidden="true">Arrow&nbsp;keys&nbsp;/&nbsp;WASD</div>
   </footer>
 
   <p class="sr-only" role="status" aria-live="polite" id="announcer"></p>
 
-  <!-- ══════════════════════ THE WORLD — 3 × 3 rooms ══════════════════════
-       Row 1 :  Languages   Education    (uncharted)
-       Row 2 :  Projects    HOME         Papers
-       Row 3 :  (uncharted) Experience   Contact
-  ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- ══════════════════════ THE WORLD ══════════════════════
+       Upper floor :                    HOME
+       Lower strip : Languages · Projects · Education · Experience · Papers · Contact
+       From Home you take a door: ↙ Education · ↓ Experience · ↘ Papers.
+       Down in the strip you walk ← → between rooms, or head ↑ back up.
+  ═══════════════════════════════════════════════════════════ -->
   <main class="viewport" id="viewport">
     <div class="world" id="world">
 
-      <!-- A1 · LANGUAGES -->
+      <!-- HOME · upper floor -->
+      <section class="room room-home" data-room="home" data-title="Home" aria-label="Home">
+        <div class="room-inner room-inner-center">
+          <div class="hero">
+            <span class="meta-label">Personal atlas · Room 326</span>
+            <h1 class="hero-name">Hamed<br>Mirbagheri</h1>
+            <!-- ✏️ EDIT: your one-line pitch -->
+            <p class="hero-tagline">Engineer &amp; builder. This is not a website — it&rsquo;s a map.</p>
+
+            <!-- The three doors, fanned around the name -->
+            <nav class="fan" aria-label="Choose a door">
+              <button class="fan-btn glass" data-goto="education">
+                <span class="fan-arrow">↙</span>
+                <span class="fan-label">Education</span>
+              </button>
+              <button class="fan-btn glass fan-btn-center" data-goto="experience">
+                <span class="fan-arrow">↓</span>
+                <span class="fan-label">Experience</span>
+              </button>
+              <button class="fan-btn glass" data-goto="papers">
+                <span class="fan-arrow">↘</span>
+                <span class="fan-label">Papers</span>
+              </button>
+            </nav>
+            <p class="hero-hint">…and keep walking left &amp; right once you&rsquo;re down there</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOWER STRIP · walk left ↔ right -->
+
       <section class="room" data-room="languages" data-title="Languages" aria-label="Languages">
         <div class="room-inner">
           <h2 class="opener">Languages</h2>
@@ -73,7 +105,33 @@
         </div>
       </section>
 
-      <!-- B1 · EDUCATION -->
+      <section class="room" data-room="projects" data-title="Projects" aria-label="Projects">
+        <div class="room-inner">
+          <h2 class="opener">Projects</h2>
+          <ul class="entry-list">
+            <!-- ✏️ EDIT: your projects, links included -->
+            <li class="entry">
+              <span class="meta-label">2026 · Web</span>
+              <h3 class="entry-title">This very site</h3>
+              <p class="entry-body">A personal atlas you steer like a game — rooms, doors, particles, zero scrolljacking guilt.</p>
+              <a class="pill glass" href="https://github.com/Hamed-kalak" target="_blank" rel="noopener">View source</a>
+            </li>
+            <li class="entry">
+              <span class="meta-label">2025 · Python</span>
+              <h3 class="entry-title">Let It Snow</h3>
+              <p class="entry-body">A tiny terminal toy that makes it snow inside your shell. Sometimes the small ones are the fun ones.</p>
+              <a class="pill glass" href="https://github.com/Hamed-kalak/room326" target="_blank" rel="noopener">View project</a>
+            </li>
+            <li class="entry">
+              <span class="meta-label">Year · Stack</span>
+              <h3 class="entry-title">Project title here</h3>
+              <p class="entry-body">One or two sentences on what it does, why it exists, and what was hard about it.</p>
+              <a class="pill glass" href="#" target="_blank" rel="noopener">View project</a>
+            </li>
+          </ul>
+        </div>
+      </section>
+
       <section class="room" data-room="education" data-title="Education" aria-label="Education">
         <div class="room-inner">
           <h2 class="opener">Education</h2>
@@ -95,86 +153,6 @@
         </div>
       </section>
 
-      <!-- C1 · UNCHARTED -->
-      <section class="room room-void" data-room="void-ne" data-title="Uncharted" aria-label="Uncharted territory">
-        <div class="room-inner room-inner-center">
-          <h2 class="opener opener-quiet">Uncharted territory.</h2>
-          <p class="body-copy">Nothing lives here yet. Every good map keeps a little blank space for what comes next.</p>
-          <button class="pill" data-move="home">Return home</button>
-        </div>
-      </section>
-
-      <!-- A2 · PROJECTS -->
-      <section class="room" data-room="projects" data-title="Projects" aria-label="Projects">
-        <div class="room-inner">
-          <h2 class="opener">Projects</h2>
-          <ul class="entry-list">
-            <!-- ✏️ EDIT: your projects, links included -->
-            <li class="entry">
-              <span class="meta-label">2026 · Web</span>
-              <h3 class="entry-title">This very site</h3>
-              <p class="entry-body">A personal atlas you steer like a game — nine rooms, four directions, zero scrolljacking guilt.</p>
-              <a class="pill" href="https://github.com/Hamed-kalak" target="_blank" rel="noopener">View source</a>
-            </li>
-            <li class="entry">
-              <span class="meta-label">2025 · Python</span>
-              <h3 class="entry-title">Let It Snow</h3>
-              <p class="entry-body">A tiny terminal toy that makes it snow inside your shell. Sometimes the small ones are the fun ones.</p>
-              <a class="pill" href="https://github.com/Hamed-kalak/room326" target="_blank" rel="noopener">View project</a>
-            </li>
-            <li class="entry">
-              <span class="meta-label">Year · Stack</span>
-              <h3 class="entry-title">Project title here</h3>
-              <p class="entry-body">One or two sentences on what it does, why it exists, and what was hard about it.</p>
-              <a class="pill" href="#" target="_blank" rel="noopener">View project</a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- B2 · HOME -->
-      <section class="room room-home" data-room="home" data-title="Home" aria-label="Home">
-        <div class="room-inner room-inner-center">
-          <span class="meta-label">Personal atlas · Room 326</span>
-          <h1 class="hero-name">Hamed<br>Mirbagheri</h1>
-          <!-- ✏️ EDIT: your one-line pitch -->
-          <p class="hero-tagline">Engineer &amp; builder. This is not a website — it&rsquo;s a map.</p>
-          <p class="hero-hint">Pick a direction to explore</p>
-        </div>
-      </section>
-
-      <!-- C2 · PAPERS -->
-      <section class="room" data-room="papers" data-title="Papers" aria-label="Papers">
-        <div class="room-inner">
-          <h2 class="opener">Papers</h2>
-          <ul class="entry-list">
-            <!-- ✏️ EDIT: publications, theses, preprints -->
-            <li class="entry">
-              <span class="meta-label">2025 · Preprint</span>
-              <h3 class="entry-title">Title of your paper goes here, ideally something that sounds inevitable in hindsight</h3>
-              <p class="entry-sub">Co-authors · Venue or arXiv</p>
-              <a class="pill" href="#" target="_blank" rel="noopener">Read PDF</a>
-            </li>
-            <li class="entry">
-              <span class="meta-label">2024 · Thesis</span>
-              <h3 class="entry-title">Your thesis title</h3>
-              <p class="entry-sub">University Name</p>
-              <a class="pill" href="#" target="_blank" rel="noopener">Read PDF</a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- A3 · UNCHARTED -->
-      <section class="room room-void" data-room="void-sw" data-title="Uncharted" aria-label="Uncharted territory">
-        <div class="room-inner room-inner-center">
-          <h2 class="opener opener-quiet">Here be dragons.</h2>
-          <p class="body-copy">You&rsquo;ve wandered off the edge of the résumé. Respect.</p>
-          <button class="pill" data-move="home">Return home</button>
-        </div>
-      </section>
-
-      <!-- B3 · EXPERIENCE -->
       <section class="room" data-room="experience" data-title="Experience" aria-label="Experience">
         <div class="room-inner">
           <h2 class="opener">Experience</h2>
@@ -196,16 +174,36 @@
         </div>
       </section>
 
-      <!-- C3 · CONTACT -->
+      <section class="room" data-room="papers" data-title="Papers" aria-label="Papers">
+        <div class="room-inner">
+          <h2 class="opener">Papers</h2>
+          <ul class="entry-list">
+            <!-- ✏️ EDIT: publications, theses, preprints -->
+            <li class="entry">
+              <span class="meta-label">2025 · Preprint</span>
+              <h3 class="entry-title">Title of your paper goes here, ideally something that sounds inevitable in hindsight</h3>
+              <p class="entry-sub">Co-authors · Venue or arXiv</p>
+              <a class="pill glass" href="#" target="_blank" rel="noopener">Read PDF</a>
+            </li>
+            <li class="entry">
+              <span class="meta-label">2024 · Thesis</span>
+              <h3 class="entry-title">Your thesis title</h3>
+              <p class="entry-sub">University Name</p>
+              <a class="pill glass" href="#" target="_blank" rel="noopener">Read PDF</a>
+            </li>
+          </ul>
+        </div>
+      </section>
+
       <section class="room" data-room="contact" data-title="Contact" aria-label="Contact">
         <div class="room-inner room-inner-center">
           <h2 class="opener">Say hello.</h2>
           <p class="body-copy">The map ends here, but the conversation doesn&rsquo;t have to.</p>
           <div class="pill-row">
-            <a class="pill" href="mailto:hamedmirbagheri98@gmail.com">Email me</a>
-            <a class="pill" href="https://github.com/Hamed-kalak" target="_blank" rel="noopener">GitHub</a>
+            <a class="pill glass" href="mailto:hamedmirbagheri98@gmail.com">Email me</a>
+            <a class="pill glass" href="https://github.com/Hamed-kalak" target="_blank" rel="noopener">GitHub</a>
             <!-- ✏️ EDIT: add your LinkedIn URL -->
-            <a class="pill" href="#" target="_blank" rel="noopener">LinkedIn</a>
+            <a class="pill glass" href="#" target="_blank" rel="noopener">LinkedIn</a>
           </div>
         </div>
       </section>

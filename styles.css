@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
-   HAMED — WORLD · retro road-trip poster on warm paper
-   Cream canvas, one electric blue, hairline dividers, zero shadows.
+   HAMED — WORLD · retro road-trip poster on warm paper, but alive
+   Cream canvas, one electric blue, hairline dividers — now with a
+   heartbeat, drifting blur, particles and glass doors.
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -9,14 +10,16 @@
   --color-ash: #e2e8f0;
   --color-ink: #000000;
   --color-blue: #006eff;
-  --color-blue-wash: rgba(0, 110, 255, 0.06);
+  --color-blue-wash: rgba(0, 110, 255, 0.07);
+  --glass-fill: rgba(255, 255, 255, 0.42);
+  --glass-edge: rgba(0, 110, 255, 0.55);
 
   /* Type */
   --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  --text-display: clamp(64px, 11vw, 120px);
-  --text-opener: clamp(48px, 8vw, 77px);
+  --text-display: clamp(72px, 12.5vw, 148px);
+  --text-opener: clamp(52px, 8vw, 84px);
   --text-subheading: clamp(22px, 3vw, 28px);
   --text-body-lg: 21px;
   --text-body: 18px;
@@ -29,7 +32,7 @@
   --room-pad: clamp(24px, 6vw, 144px);
 
   /* Motion */
-  --glide: 650ms cubic-bezier(0.22, 1, 0.36, 1);
+  --glide: 700ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -60,28 +63,86 @@ body {
   white-space: nowrap;
 }
 
+/* ══════════════════════ Ambient life ══════════════════════ */
+
+/* Drifting blurred blue clouds behind everything */
+.fx-blobs { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--color-blue);
+  filter: blur(90px);
+  opacity: 0.10;
+  will-change: transform;
+}
+
+.blob-1 { width: 55vmin; height: 55vmin; top: -12%; left: -8%;  animation: drift-1 34s ease-in-out infinite alternate; }
+.blob-2 { width: 44vmin; height: 44vmin; bottom: -14%; right: -6%; animation: drift-2 41s ease-in-out infinite alternate; opacity: 0.08; }
+.blob-3 { width: 30vmin; height: 30vmin; top: 55%; left: 42%; animation: drift-3 27s ease-in-out infinite alternate; opacity: 0.07; }
+
+@keyframes drift-1 { to { transform: translate(38vw, 22vh) scale(1.15); } }
+@keyframes drift-2 { to { transform: translate(-32vw, -26vh) scale(0.9); } }
+@keyframes drift-3 { to { transform: translate(-24vw, -30vh) scale(1.25); } }
+
+/* Particle field */
+#particles {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Blur vignette hugging the hero — the world melts at the edges */
+.edge-blur {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  -webkit-mask-image: radial-gradient(ellipse 62% 58% at 50% 46%, transparent 58%, black 96%);
+  mask-image: radial-gradient(ellipse 62% 58% at 50% 46%, transparent 58%, black 96%);
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+body[data-room="home"] .edge-blur { opacity: 1; }
+
 /* ══════════════════════ The world & rooms ══════════════════════ */
 
 .viewport {
   position: fixed;
   inset: 0;
+  z-index: 2;
   overflow: hidden;
 }
 
 .world {
   display: grid;
-  grid-template-columns: repeat(3, 100vw);
-  grid-template-rows: repeat(3, 100vh);
-  grid-template-rows: repeat(3, 100dvh);
-  width: 300vw;
-  transform: translate(calc(var(--col, 1) * -100vw), calc(var(--row, 1) * -100dvh));
+  grid-template-columns: repeat(6, 100vw);
+  grid-template-rows: repeat(2, 100vh);
+  grid-template-rows: repeat(2, 100dvh);
+  width: 600vw;
+  transform: translate(calc(var(--col, 3) * -100vw), calc(var(--row, 0) * -100dvh)) scale(var(--zoom, 1));
   transition: transform var(--glide);
   will-change: transform;
 }
 
 @supports not (height: 100dvh) {
-  .world { transform: translate(calc(var(--col, 1) * -100vw), calc(var(--row, 1) * -100vh)); }
+  .world { transform: translate(calc(var(--col, 3) * -100vw), calc(var(--row, 0) * -100vh)) scale(var(--zoom, 1)); }
 }
+
+.world.traveling { --zoom: 0.965; }
+
+/* Upper floor: Home sits above the Experience room */
+.room[data-room="home"]       { grid-area: 1 / 4; }
+.room[data-room="languages"]  { grid-area: 2 / 1; }
+.room[data-room="projects"]   { grid-area: 2 / 2; }
+.room[data-room="education"]  { grid-area: 2 / 3; }
+.room[data-room="experience"] { grid-area: 2 / 4; }
+.room[data-room="papers"]     { grid-area: 2 / 5; }
+.room[data-room="contact"]    { grid-area: 2 / 6; }
 
 .room {
   position: relative;
@@ -91,13 +152,13 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   border: 0.75px solid var(--color-ash);
-  background: var(--color-cream);
+  background: transparent; /* the living background shows through */
 }
 
 .room-inner {
   max-width: 720px;
   margin: 0 auto;
-  padding: clamp(96px, 16vh, 150px) var(--room-pad) clamp(140px, 22vh, 190px);
+  padding: clamp(96px, 15vh, 150px) var(--room-pad) clamp(110px, 18vh, 160px);
 }
 
 .room-inner-center {
@@ -108,50 +169,149 @@ body {
   justify-content: center;
   text-align: center;
   gap: 20px;
-  padding-top: 120px;
-  padding-bottom: 160px;
+  padding-top: 110px;
+  padding-bottom: 120px;
 }
 
-/* ══════════════════════ Typography ══════════════════════ */
+/* ══════════════════════ Hero ══════════════════════ */
+
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Warm halo pooling behind the name */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 140%;
+  height: 120%;
+  transform: translate(-50%, -54%);
+  background: radial-gradient(closest-side, rgba(255, 248, 241, 0.95) 30%, rgba(0, 110, 255, 0.06) 62%, transparent 100%);
+  z-index: -1;
+  animation: halo 5.6s ease-in-out infinite;
+}
+
+@keyframes halo {
+  0%, 100% { opacity: 0.8; transform: translate(-50%, -54%) scale(1); }
+  50%      { opacity: 1;   transform: translate(-50%, -54%) scale(1.06); }
+}
 
 .hero-name {
   font-family: var(--font-serif);
-  font-weight: 300;
+  font-weight: 500;
   font-size: var(--text-display);
-  line-height: 0.95;
+  line-height: 0.92;
   letter-spacing: -0.02em;
   color: var(--color-blue);
+  animation: heartbeat 2.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Lub-dub. Subtle, but alive. */
+@keyframes heartbeat {
+  0%, 34%, 100% { transform: scale(1); }
+  8%            { transform: scale(1.022); }
+  16%           { transform: scale(1); }
+  24%           { transform: scale(1.014); }
 }
 
 .hero-tagline {
-  font-weight: 300;
+  font-weight: 400;
   font-size: var(--text-body-lg);
   max-width: 480px;
 }
 
 .hero-hint {
-  font-weight: 300;
-  font-size: var(--text-body-sm);
+  font-weight: 400;
+  font-size: var(--text-label);
   color: var(--color-blue);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-top: 9px;
+  opacity: 0.75;
+  margin-top: 7px;
 }
+
+/* The three doors, fanned around the name */
+.fan {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(14px, 3vw, 35px);
+  margin-top: 20px;
+}
+
+.fan-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 32px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--glass-edge);
+  color: var(--color-blue);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: transform 250ms ease, background-color 250ms ease;
+}
+
+.fan-btn-center { transform: translateY(22px); }
+
+.fan-btn:hover, .fan-btn:focus-visible { transform: translateY(-3px) scale(1.04); }
+.fan-btn-center:hover, .fan-btn-center:focus-visible { transform: translateY(19px) scale(1.04); }
+
+.fan-arrow { font-size: 22px; line-height: 1; font-weight: 300; }
+
+.fan-label {
+  font-weight: 500;
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ══════════════════════ Glass ══════════════════════ */
+
+.glass {
+  position: relative;
+  overflow: hidden;
+  background: var(--glass-fill);
+  backdrop-filter: blur(12px) saturate(1.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
+}
+
+/* The moving reflection */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%);
+  transform: translateX(-130%);
+  animation: sheen 5.2s ease-in-out infinite;
+  animation-delay: var(--sheen-delay, 0s);
+  pointer-events: none;
+}
+
+@keyframes sheen {
+  0%, 58%   { transform: translateX(-130%); }
+  78%, 100% { transform: translateX(130%); }
+}
+
+/* ══════════════════════ Typography ══════════════════════ */
 
 .opener {
   font-family: var(--font-serif);
-  font-weight: 300;
+  font-weight: 500;
   font-size: var(--text-opener);
   line-height: 0.95;
   letter-spacing: -0.02em;
   color: var(--color-blue);
   text-align: center;
-  margin-bottom: clamp(56px, 10vh, 96px);
+  margin-bottom: clamp(48px, 9vh, 88px);
 }
 
-.opener-quiet { margin-bottom: 0; }
-
-/* Centered rooms space with flex gap — the opener margin would double it */
 .room-inner-center .opener { margin-bottom: 0; }
 
 .body-copy {
@@ -162,7 +322,7 @@ body {
 
 .meta-label {
   display: block;
-  font-weight: 300;
+  font-weight: 500;
   font-size: var(--text-label);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -186,7 +346,7 @@ body {
 .entry:last-child { border-bottom: var(--hairline); }
 
 .entry-title {
-  font-weight: 300;
+  font-weight: 500;
   font-size: var(--text-subheading);
   line-height: 1.2;
   color: var(--color-blue);
@@ -194,7 +354,7 @@ body {
 }
 
 .entry-sub {
-  font-weight: 300;
+  font-weight: 400;
   font-size: var(--text-body-sm);
   margin-bottom: 11px;
 }
@@ -211,20 +371,19 @@ body {
 .pill {
   display: inline-block;
   padding: 11px 35px;
-  border: 1.5px solid var(--color-blue);
+  border: 1.5px solid var(--glass-edge);
   border-radius: var(--radius-pill);
-  background: transparent;
   color: var(--color-blue);
   font-family: var(--font-sans);
-  font-weight: 300;
+  font-weight: 500;
   font-size: var(--text-body-sm);
   letter-spacing: -0.02em;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 200ms ease;
+  transition: transform 250ms ease;
 }
 
-.pill:hover, .pill:focus-visible { background: var(--color-blue-wash); }
+.pill:hover, .pill:focus-visible { transform: translateY(-2px) scale(1.03); }
 
 .pill-row {
   display: flex;
@@ -234,38 +393,59 @@ body {
   margin-top: 20px;
 }
 
-/* ══════════════════════ Signposts (auto-injected) ══════════════════════ */
+/* ══════════ Room navigation: side doors + way up (injected) ══════════ */
 
-.signpost {
+.roomnav {
   position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
   background: none;
   border: none;
   cursor: pointer;
-  font-family: var(--font-sans);
-  font-weight: 300;
-  font-size: var(--text-body-sm);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--color-blue);
-  padding: 11px 14px;
-  z-index: 2;
-  transition: opacity 200ms ease;
-  opacity: 0.85;
+  font-family: var(--font-sans);
 }
 
-.signpost:hover, .signpost:focus-visible { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
-
-.signpost-up    { top: 20px;  left: 50%; transform: translateX(-50%); }
-.signpost-down  { bottom: 20px; left: 50%; transform: translateX(-50%); }
-.signpost-left  { left: 14px;  top: 50%; transform: translateY(-50%) rotate(180deg); writing-mode: vertical-rl; }
-.signpost-right { right: 14px; top: 50%; transform: translateY(-50%); writing-mode: vertical-rl; }
-
-/* Keep vertical signposts off small screens — they crowd the room */
-@media (max-width: 720px) {
-  .signpost-left, .signpost-right { display: none; }
-  .signpost-up { top: 56px; }
-  .signpost-down { bottom: 12px; font-size: 13px; padding: 8px; }
+.roomnav-circle {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border: 1.5px solid var(--glass-edge);
+  border-radius: 50%;
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--color-blue);
+  transition: transform 250ms ease;
 }
+
+.roomnav:hover .roomnav-circle, .roomnav:focus-visible .roomnav-circle { transform: scale(1.1); }
+
+.roomnav-label {
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.roomnav-left  { left: clamp(10px, 2.5vw, 43px); top: 50%; transform: translateY(-50%); }
+.roomnav-right { right: clamp(10px, 2.5vw, 43px); top: 50%; transform: translateY(-50%); }
+
+.roomnav-up {
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: row;
+  gap: 11px;
+  padding: 10px 24px;
+  border: 1.5px solid var(--glass-edge);
+  border-radius: var(--radius-pill);
+}
+
+.roomnav-up .roomnav-label { font-size: var(--text-label); }
 
 /* ══════════════════════ HUD ══════════════════════ */
 
@@ -284,17 +464,10 @@ body {
 .hud > * { pointer-events: auto; }
 
 .hud-top { top: 0; }
-.hud-bottom { bottom: 0; align-items: flex-end; }
-
-.hud-left {
-  display: flex;
-  align-items: baseline;
-  gap: 29px;
-  margin-bottom: 14px;
-}
+.hud-bottom { bottom: 0; }
 
 .wordmark {
-  font-weight: 300;
+  font-weight: 500;
   font-size: var(--text-body-sm);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -302,17 +475,17 @@ body {
   text-decoration: none;
 }
 
-/* Mini-map */
+/* Mini-map: one cell up top (Home), the strip below */
 .minimap {
   display: grid;
-  grid-template-columns: repeat(3, 16px);
-  grid-template-rows: repeat(3, 16px);
+  grid-template-columns: repeat(6, 15px);
+  grid-template-rows: repeat(2, 15px);
   gap: 3px;
 }
 
 .minimap-cell {
   border: 1px solid var(--color-ash);
-  background: var(--color-cream);
+  background: rgba(255, 255, 255, 0.4);
   padding: 0;
   cursor: pointer;
   border-radius: 0;
@@ -320,7 +493,7 @@ body {
 }
 
 .minimap-cell:hover { border-color: var(--color-blue); }
-.minimap-cell.is-void { border-style: dotted; cursor: default; }
+.minimap-cell.is-empty { visibility: hidden; }
 .minimap-cell.is-current { background: var(--color-blue); border-color: var(--color-blue); }
 
 /* Sector readout */
@@ -328,7 +501,7 @@ body {
   display: flex;
   align-items: baseline;
   gap: 11px;
-  font-weight: 300;
+  font-weight: 400;
 }
 
 .sector-label {
@@ -340,6 +513,7 @@ body {
 
 .sector-value {
   font-family: var(--font-serif);
+  font-weight: 500;
   font-size: 28px;
   color: var(--color-blue);
   line-height: 1;
@@ -352,41 +526,8 @@ body {
   color: var(--color-ink);
 }
 
-/* D-pad — bottom-right corner, leaving bottom-center to the signposts */
-.dpad {
-  display: grid;
-  grid-template-areas:
-    ".    up    ."
-    "left home right"
-    ".    down  .";
-  gap: 7px;
-}
-
-.dpad-btn {
-  width: 52px;
-  height: 52px;
-  border: 1.5px solid var(--color-blue);
-  border-radius: var(--radius-pill);
-  background: var(--color-cream);
-  color: var(--color-blue);
-  font-family: var(--font-sans);
-  font-weight: 300;
-  font-size: 18px;
-  cursor: pointer;
-  transition: background-color 200ms ease, opacity 200ms ease;
-}
-
-.dpad-btn:hover, .dpad-btn:focus-visible { background: var(--color-blue-wash); }
-.dpad-btn:disabled { opacity: 0.2; cursor: default; background: var(--color-cream); }
-
-.dpad-up    { grid-area: up; }
-.dpad-down  { grid-area: down; }
-.dpad-left  { grid-area: left; }
-.dpad-right { grid-area: right; }
-.dpad-home  { grid-area: home; font-size: 12px; }
-
 .keys-hint {
-  font-weight: 300;
+  font-weight: 400;
   font-size: var(--text-label);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -394,25 +535,47 @@ body {
   opacity: 0.7;
 }
 
-@media (max-width: 720px) {
-  .keys-hint { display: none; }
-  .sector-room { display: none; }
-  .dpad-btn { width: 46px; height: 46px; }
-}
-
 /* ══════════════════════ Edge bump ══════════════════════ */
 
 @keyframes bump-x { 30% { transform: translateX(var(--bump, 10px)); } 100% { transform: none; } }
 @keyframes bump-y { 30% { transform: translateY(var(--bump, 10px)); } 100% { transform: none; } }
 
-.viewport.bump-left  { --bump: 12px;  animation: bump-x 350ms ease; }
-.viewport.bump-right { --bump: -12px; animation: bump-x 350ms ease; }
-.viewport.bump-up    { --bump: 12px;  animation: bump-y 350ms ease; }
-.viewport.bump-down  { --bump: -12px; animation: bump-y 350ms ease; }
+.viewport.bump-left  { --bump: 14px;  animation: bump-x 350ms ease; }
+.viewport.bump-right { --bump: -14px; animation: bump-x 350ms ease; }
+.viewport.bump-up    { --bump: 14px;  animation: bump-y 350ms ease; }
+.viewport.bump-down  { --bump: -14px; animation: bump-y 350ms ease; }
+
+/* ══════════════════════ Small screens ══════════════════════ */
+
+@media (max-width: 720px) {
+  .keys-hint { display: none; }
+  .sector-room { display: none; }
+
+  .fan { flex-wrap: wrap; justify-content: center; }
+  .fan-btn { padding: 12px 22px; }
+  .fan-btn-center { transform: none; }
+  .fan-btn-center:hover, .fan-btn-center:focus-visible { transform: translateY(-3px) scale(1.04); }
+
+  .roomnav-circle { width: 52px; height: 52px; font-size: 18px; }
+  .roomnav-label { display: none; }
+  .roomnav-up .roomnav-label { display: inline; }
+  .roomnav-up { top: 64px; }
+
+  /* Dock side doors in the bottom corners, clear of the text column */
+  .roomnav-left  { top: auto; bottom: 24px; transform: none; }
+  .roomnav-right { top: auto; bottom: 24px; transform: none; }
+
+  /* …and center the sector readout so the corners stay free */
+  .hud-bottom { justify-content: center; }
+
+  .blob { filter: blur(60px); }
+}
 
 /* ══════════════════════ Reduced motion ══════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
   .world { transition: none; }
   .viewport { animation: none !important; }
+  .blob, .hero-name, .hero::before, .glass::after { animation: none !important; }
+  #particles { display: none; }
 }

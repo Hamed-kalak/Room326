@@ -1,8 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════════
-   HAMED — WORLD · game-style navigation
-   A 3×3 grid of rooms. Move with arrows, WASD, the D-pad, the
-   mini-map, signposts, or horizontal swipes. Position syncs to the
-   URL hash so every room is linkable.
+   HAMED — WORLD · game-style navigation, v2
+   Home floats on the upper floor. Below it, a strip of six rooms:
+   Languages · Projects · Education · Experience · Papers · Contact.
+   From Home you take one of three doors (↙ ↓ ↘). Down in the strip
+   you walk ← → between rooms, or head ↑ back up to Home.
+   Plus: particles, drifting blur, heartbeat — the map is alive.
    ═══════════════════════════════════════════════════════════════════ */
 
 (() => {
@@ -14,91 +16,119 @@
   const announcer = document.getElementById('announcer');
   const sectorEl = document.getElementById('sector');
   const sectorRoomEl = document.getElementById('sector-room');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Build the grid model from the DOM (rooms are in row-major order).
-  const sections = [...world.querySelectorAll('.room')];
-  const SIZE = 3;
-  const grid = [];
-  sections.forEach((el, i) => {
-    const row = Math.floor(i / SIZE);
-    const col = i % SIZE;
-    if (!grid[row]) grid[row] = [];
-    grid[row][col] = {
+  // ── World model ───────────────────────────────────────────────────
+  const STRIP = ['languages', 'projects', 'education', 'experience', 'papers', 'contact'];
+  const HOME_COL = 3; // Home sits above the Experience room
+
+  const rooms = {};
+  document.querySelectorAll('.room').forEach((el) => {
+    const id = el.dataset.room;
+    rooms[id] = {
+      id,
       el,
-      row,
-      col,
-      id: el.dataset.room,
       title: el.dataset.title,
-      isVoid: el.classList.contains('room-void'),
+      row: id === 'home' ? 0 : 1,
+      col: id === 'home' ? HOME_COL : STRIP.indexOf(id),
     };
   });
 
-  const HOME = { row: 1, col: 1 };
-  const COLS = ['A', 'B', 'C'];
-  const DIRS = {
-    up:    { dr: -1, dc: 0 },
-    down:  { dr: 1,  dc: 0 },
-    left:  { dr: 0,  dc: -1 },
-    right: { dr: 0,  dc: 1 },
-  };
+  let current = rooms.home;
 
-  let pos = { ...HOME };
+  // What each room offers in each direction.
+  function exits(room) {
+    if (room.id === 'home') {
+      return {
+        left: STRIP[HOME_COL - 1],  // ↙ door
+        down: STRIP[HOME_COL],      // ↓ door
+        right: STRIP[HOME_COL + 1], // ↘ door
+        up: null,
+      };
+    }
+    const i = STRIP.indexOf(room.id);
+    return {
+      left: STRIP[i - 1] || null,
+      right: STRIP[i + 1] || null,
+      up: 'home',
+      down: null,
+    };
+  }
 
-  const roomAt = (row, col) =>
-    row >= 0 && row < SIZE && col >= 0 && col < SIZE ? grid[row][col] : null;
-
-  const findRoom = (id) => {
-    for (const row of grid) for (const cell of row) if (cell.id === id) return cell;
-    return null;
-  };
-
-  // ── Mini-map ──────────────────────────────────────────────────────
-  const mapCells = [];
-  for (const row of grid) {
-    for (const cell of row) {
+  // ── Mini-map: lone Home cell up top, the strip below ─────────────
+  const mapCells = {};
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < STRIP.length; col++) {
+      const id = row === 0 ? (col === HOME_COL ? 'home' : null) : STRIP[col];
       const btn = document.createElement('button');
-      btn.className = 'minimap-cell' + (cell.isVoid ? ' is-void' : '');
-      btn.title = cell.title;
-      btn.setAttribute('aria-label', `Go to ${cell.title}`);
-      btn.addEventListener('click', () => goTo(cell.row, cell.col));
+      btn.className = 'minimap-cell' + (id ? '' : ' is-empty');
+      if (id) {
+        btn.title = rooms[id].title;
+        btn.setAttribute('aria-label', `Go to ${rooms[id].title}`);
+        btn.addEventListener('click', () => goTo(id));
+        mapCells[id] = btn;
+      } else {
+        btn.tabIndex = -1;
+        btn.setAttribute('aria-hidden', 'true');
+      }
       minimap.appendChild(btn);
-      mapCells.push(btn);
     }
   }
 
-  // ── Signposts: label what lies in each direction of every room ───
-  for (const row of grid) {
-    for (const cell of row) {
-      for (const [dir, { dr, dc }] of Object.entries(DIRS)) {
-        const neighbor = roomAt(cell.row + dr, cell.col + dc);
-        if (!neighbor || neighbor.isVoid) continue;
-        const arrow = { up: '↑', down: '↓', left: '←', right: '→' }[dir];
-        const post = document.createElement('button');
-        post.className = `signpost signpost-${dir}`;
-        post.textContent = dir === 'down' || dir === 'right'
-          ? `${neighbor.title} ${arrow}`
-          : `${arrow} ${neighbor.title}`;
-        post.addEventListener('click', () => move(dir));
-        cell.el.appendChild(post);
-      }
+  // ── Room navigation: side doors + way up (strip rooms only) ──────
+  for (const id of STRIP) {
+    const room = rooms[id];
+    const e = exits(room);
+
+    if (e.left) {
+      room.el.appendChild(makeNav('left', '←', rooms[e.left].title, () => goTo(e.left)));
     }
+    if (e.right) {
+      room.el.appendChild(makeNav('right', '→', rooms[e.right].title, () => goTo(e.right)));
+    }
+    room.el.appendChild(makeNav('up', '↑', 'Home', () => goTo('home')));
   }
+
+  function makeNav(dir, arrow, label, onClick) {
+    const btn = document.createElement('button');
+    btn.className = `roomnav roomnav-${dir} ${dir === 'up' ? 'glass' : ''}`;
+    btn.setAttribute('aria-label', `Go to ${label}`);
+    if (dir === 'up') {
+      btn.innerHTML = `<span class="roomnav-arrow">${arrow}</span><span class="roomnav-label">${label}</span>`;
+    } else {
+      btn.innerHTML = `<span class="roomnav-circle glass">${arrow}</span><span class="roomnav-label">${label}</span>`;
+    }
+    btn.addEventListener('click', onClick);
+    return btn;
+  }
+
+  // Stagger the glass reflections so they don't flash in unison.
+  document.querySelectorAll('.glass').forEach((el, i) => {
+    el.style.setProperty('--sheen-delay', `${(i * 0.7) % 4.2}s`);
+  });
 
   // ── Movement ──────────────────────────────────────────────────────
-  function goTo(row, col, { silent = false } = {}) {
-    const target = roomAt(row, col);
-    if (!target) return false;
-    pos = { row, col };
+  function goTo(id, { silent = false } = {}) {
+    const target = rooms[id];
+    if (!target || target === current) return false;
+    current = target;
     render(silent);
+    if (!reducedMotion) travelZoom();
     return true;
   }
 
   function move(dir) {
-    if (dir === 'home') return goTo(HOME.row, HOME.col);
-    const { dr, dc } = DIRS[dir];
-    const ok = goTo(pos.row + dr, pos.col + dc);
-    if (!ok) bump(dir);
-    return ok;
+    const id = exits(current)[dir];
+    if (id) return goTo(id);
+    bump(dir);
+    return false;
+  }
+
+  let zoomTimer;
+  function travelZoom() {
+    world.classList.add('traveling');
+    clearTimeout(zoomTimer);
+    zoomTimer = setTimeout(() => world.classList.remove('traveling'), 380);
   }
 
   function bump(dir) {
@@ -110,22 +140,17 @@
   }
 
   function render(silent = false) {
-    const current = grid[pos.row][pos.col];
+    world.style.setProperty('--row', current.row);
+    world.style.setProperty('--col', current.col);
 
-    world.style.setProperty('--row', pos.row);
-    world.style.setProperty('--col', pos.col);
+    document.body.dataset.room = current.id;
 
-    mapCells.forEach((btn, i) => {
-      btn.classList.toggle('is-current', i === pos.row * SIZE + pos.col);
-    });
-
-    sectorEl.textContent = `${COLS[pos.col]}${pos.row + 1}`;
-    sectorRoomEl.textContent = current.title;
-
-    for (const [dir, { dr, dc }] of Object.entries(DIRS)) {
-      const btn = document.querySelector(`.dpad-btn[data-move="${dir}"]`);
-      if (btn) btn.disabled = !roomAt(pos.row + dr, pos.col + dc);
+    for (const [id, btn] of Object.entries(mapCells)) {
+      btn.classList.toggle('is-current', id === current.id);
     }
+
+    sectorEl.textContent = current.id === 'home' ? 'HQ' : `S${current.col + 1}`;
+    sectorRoomEl.textContent = current.title;
 
     if (!silent) {
       announcer.textContent = `Now in: ${current.title}`;
@@ -135,8 +160,8 @@
 
   // ── Controls ──────────────────────────────────────────────────────
   document.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-move]');
-    if (btn) move(btn.dataset.move);
+    const btn = e.target.closest('[data-goto]');
+    if (btn) goTo(btn.dataset.goto);
   });
 
   const KEYMAP = {
@@ -155,7 +180,8 @@
     move(dir);
   });
 
-  // Horizontal swipe (vertical stays free for scrolling long rooms).
+  // Swipes: horizontal walks the strip (or takes a side door from Home);
+  // a decisive vertical swipe goes down from Home / back up from the strip.
   let touchX = null, touchY = null;
   document.addEventListener('touchstart', (e) => {
     touchX = e.touches[0].clientX;
@@ -169,17 +195,59 @@
     touchX = touchY = null;
     if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       move(dx < 0 ? 'right' : 'left');
+    } else if (current.id === 'home' && dy < -90 && Math.abs(dy) > Math.abs(dx) * 1.5) {
+      move('down'); // swipe up on Home dives into the strip
     }
   }, { passive: true });
 
   // ── Deep links: #education, #papers, … ───────────────────────────
   function syncFromHash(silent) {
-    const target = findRoom(location.hash.slice(1));
-    if (target) goTo(target.row, target.col, { silent });
+    const id = location.hash.slice(1);
+    if (rooms[id]) goTo(id, { silent });
   }
 
   window.addEventListener('hashchange', () => syncFromHash(false));
 
   syncFromHash(true);
   render(true);
+
+  // ══════════════════ Particles: slow blue embers ══════════════════
+  if (!reducedMotion) {
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    let W, H, dots;
+
+    function seed() {
+      W = canvas.width = window.innerWidth * devicePixelRatio;
+      H = canvas.height = window.innerHeight * devicePixelRatio;
+      const count = Math.min(64, Math.floor(window.innerWidth / 24));
+      dots = Array.from({ length: count }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: (Math.random() * 1.8 + 0.8) * devicePixelRatio,
+        vy: (Math.random() * 0.22 + 0.06) * devicePixelRatio,
+        sway: Math.random() * 0.5 + 0.15,
+        phase: Math.random() * Math.PI * 2,
+        alpha: Math.random() * 0.22 + 0.08,
+      }));
+    }
+
+    function tick(t) {
+      ctx.clearRect(0, 0, W, H);
+      for (const d of dots) {
+        d.y -= d.vy;
+        const x = d.x + Math.sin(t / 2400 + d.phase) * 18 * d.sway * devicePixelRatio;
+        if (d.y < -10) { d.y = H + 10; d.x = Math.random() * W; }
+        ctx.beginPath();
+        ctx.arc(x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0, 110, 255, ${d.alpha})`;
+        ctx.fill();
+      }
+      requestAnimationFrame(tick);
+    }
+
+    seed();
+    window.addEventListener('resize', seed);
+    requestAnimationFrame(tick);
+  }
 })();
