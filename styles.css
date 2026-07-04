@@ -1,0 +1,418 @@
+/* ═══════════════════════════════════════════════════════════════════
+   HAMED — WORLD · retro road-trip poster on warm paper
+   Cream canvas, one electric blue, hairline dividers, zero shadows.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Colors */
+  --color-cream: #fff8f1;
+  --color-ash: #e2e8f0;
+  --color-ink: #000000;
+  --color-blue: #006eff;
+  --color-blue-wash: rgba(0, 110, 255, 0.06);
+
+  /* Type */
+  --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --text-display: clamp(64px, 11vw, 120px);
+  --text-opener: clamp(48px, 8vw, 77px);
+  --text-subheading: clamp(22px, 3vw, 28px);
+  --text-body-lg: 21px;
+  --text-body: 18px;
+  --text-body-sm: 16px;
+  --text-label: 14px;
+
+  /* Shape & rhythm */
+  --radius-pill: 60px;
+  --hairline: 1.5px solid var(--color-ash);
+  --room-pad: clamp(24px, 6vw, 144px);
+
+  /* Motion */
+  --glide: 650ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: var(--text-body);
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  font-feature-settings: "clig", "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ══════════════════════ The world & rooms ══════════════════════ */
+
+.viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.world {
+  display: grid;
+  grid-template-columns: repeat(3, 100vw);
+  grid-template-rows: repeat(3, 100vh);
+  grid-template-rows: repeat(3, 100dvh);
+  width: 300vw;
+  transform: translate(calc(var(--col, 1) * -100vw), calc(var(--row, 1) * -100dvh));
+  transition: transform var(--glide);
+  will-change: transform;
+}
+
+@supports not (height: 100dvh) {
+  .world { transform: translate(calc(var(--col, 1) * -100vw), calc(var(--row, 1) * -100vh)); }
+}
+
+.room {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 0.75px solid var(--color-ash);
+  background: var(--color-cream);
+}
+
+.room-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: clamp(96px, 16vh, 150px) var(--room-pad) clamp(140px, 22vh, 190px);
+}
+
+.room-inner-center {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 20px;
+  padding-top: 120px;
+  padding-bottom: 160px;
+}
+
+/* ══════════════════════ Typography ══════════════════════ */
+
+.hero-name {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: var(--text-display);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--color-blue);
+}
+
+.hero-tagline {
+  font-weight: 300;
+  font-size: var(--text-body-lg);
+  max-width: 480px;
+}
+
+.hero-hint {
+  font-weight: 300;
+  font-size: var(--text-body-sm);
+  color: var(--color-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 9px;
+}
+
+.opener {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: var(--text-opener);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--color-blue);
+  text-align: center;
+  margin-bottom: clamp(56px, 10vh, 96px);
+}
+
+.opener-quiet { margin-bottom: 0; }
+
+/* Centered rooms space with flex gap — the opener margin would double it */
+.room-inner-center .opener { margin-bottom: 0; }
+
+.body-copy {
+  max-width: 600px;
+  margin: 0 auto;
+  font-size: var(--text-body);
+}
+
+.meta-label {
+  display: block;
+  font-weight: 300;
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-blue);
+  margin-bottom: 7px;
+}
+
+/* ══════════════════════ Entry lists ══════════════════════ */
+
+.entry-list {
+  list-style: none;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.entry {
+  padding: 35px 0;
+  border-top: var(--hairline);
+}
+
+.entry:last-child { border-bottom: var(--hairline); }
+
+.entry-title {
+  font-weight: 300;
+  font-size: var(--text-subheading);
+  line-height: 1.2;
+  color: var(--color-blue);
+  margin-bottom: 7px;
+}
+
+.entry-sub {
+  font-weight: 300;
+  font-size: var(--text-body-sm);
+  margin-bottom: 11px;
+}
+
+.entry-body {
+  font-size: var(--text-body);
+  margin-bottom: 14px;
+}
+
+.entry-body:last-child { margin-bottom: 0; }
+
+/* ══════════════════════ Pills ══════════════════════ */
+
+.pill {
+  display: inline-block;
+  padding: 11px 35px;
+  border: 1.5px solid var(--color-blue);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-blue);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: var(--text-body-sm);
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 200ms ease;
+}
+
+.pill:hover, .pill:focus-visible { background: var(--color-blue-wash); }
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+/* ══════════════════════ Signposts (auto-injected) ══════════════════════ */
+
+.signpost {
+  position: absolute;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: var(--text-body-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-blue);
+  padding: 11px 14px;
+  z-index: 2;
+  transition: opacity 200ms ease;
+  opacity: 0.85;
+}
+
+.signpost:hover, .signpost:focus-visible { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+
+.signpost-up    { top: 20px;  left: 50%; transform: translateX(-50%); }
+.signpost-down  { bottom: 20px; left: 50%; transform: translateX(-50%); }
+.signpost-left  { left: 14px;  top: 50%; transform: translateY(-50%) rotate(180deg); writing-mode: vertical-rl; }
+.signpost-right { right: 14px; top: 50%; transform: translateY(-50%); writing-mode: vertical-rl; }
+
+/* Keep vertical signposts off small screens — they crowd the room */
+@media (max-width: 720px) {
+  .signpost-left, .signpost-right { display: none; }
+  .signpost-up { top: 56px; }
+  .signpost-down { bottom: 12px; font-size: 13px; padding: 8px; }
+}
+
+/* ══════════════════════ HUD ══════════════════════ */
+
+.hud {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px clamp(20px, 3vw, 43px);
+  pointer-events: none;
+}
+
+.hud > * { pointer-events: auto; }
+
+.hud-top { top: 0; }
+.hud-bottom { bottom: 0; align-items: flex-end; }
+
+.hud-left {
+  display: flex;
+  align-items: baseline;
+  gap: 29px;
+  margin-bottom: 14px;
+}
+
+.wordmark {
+  font-weight: 300;
+  font-size: var(--text-body-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-blue);
+  text-decoration: none;
+}
+
+/* Mini-map */
+.minimap {
+  display: grid;
+  grid-template-columns: repeat(3, 16px);
+  grid-template-rows: repeat(3, 16px);
+  gap: 3px;
+}
+
+.minimap-cell {
+  border: 1px solid var(--color-ash);
+  background: var(--color-cream);
+  padding: 0;
+  cursor: pointer;
+  border-radius: 0;
+  transition: border-color 200ms ease, background-color 200ms ease;
+}
+
+.minimap-cell:hover { border-color: var(--color-blue); }
+.minimap-cell.is-void { border-style: dotted; cursor: default; }
+.minimap-cell.is-current { background: var(--color-blue); border-color: var(--color-blue); }
+
+/* Sector readout */
+.sector {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  font-weight: 300;
+}
+
+.sector-label {
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-blue);
+}
+
+.sector-value {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  color: var(--color-blue);
+  line-height: 1;
+}
+
+.sector-room {
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-ink);
+}
+
+/* D-pad — bottom-right corner, leaving bottom-center to the signposts */
+.dpad {
+  display: grid;
+  grid-template-areas:
+    ".    up    ."
+    "left home right"
+    ".    down  .";
+  gap: 7px;
+}
+
+.dpad-btn {
+  width: 52px;
+  height: 52px;
+  border: 1.5px solid var(--color-blue);
+  border-radius: var(--radius-pill);
+  background: var(--color-cream);
+  color: var(--color-blue);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 200ms ease, opacity 200ms ease;
+}
+
+.dpad-btn:hover, .dpad-btn:focus-visible { background: var(--color-blue-wash); }
+.dpad-btn:disabled { opacity: 0.2; cursor: default; background: var(--color-cream); }
+
+.dpad-up    { grid-area: up; }
+.dpad-down  { grid-area: down; }
+.dpad-left  { grid-area: left; }
+.dpad-right { grid-area: right; }
+.dpad-home  { grid-area: home; font-size: 12px; }
+
+.keys-hint {
+  font-weight: 300;
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-blue);
+  opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+  .keys-hint { display: none; }
+  .sector-room { display: none; }
+  .dpad-btn { width: 46px; height: 46px; }
+}
+
+/* ══════════════════════ Edge bump ══════════════════════ */
+
+@keyframes bump-x { 30% { transform: translateX(var(--bump, 10px)); } 100% { transform: none; } }
+@keyframes bump-y { 30% { transform: translateY(var(--bump, 10px)); } 100% { transform: none; } }
+
+.viewport.bump-left  { --bump: 12px;  animation: bump-x 350ms ease; }
+.viewport.bump-right { --bump: -12px; animation: bump-x 350ms ease; }
+.viewport.bump-up    { --bump: 12px;  animation: bump-y 350ms ease; }
+.viewport.bump-down  { --bump: -12px; animation: bump-y 350ms ease; }
+
+/* ══════════════════════ Reduced motion ══════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .world { transition: none; }
+  .viewport { animation: none !important; }
+}

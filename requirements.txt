@@ -1,5 +1,0 @@
-# Room326
-Here goes everything 
-
-turtel
-numpy
