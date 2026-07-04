@@ -1,24 +1,22 @@
-# Hamed — World
+# Hamed Mirbagheri — personal site
 
-A personal brand site that plays like a game, not a website.
-
-Home floats on an upper floor with three glass doors fanned around the name
-(↙ ↓ ↘). Below it is a strip of six rooms you walk through left/right, with a
-door back up to Home from any of them. Steer with arrow keys, WASD, the glass
-doors, the mini-map, or swipes. Every room is deep-linkable
-(`#education`, `#papers`, …).
+A nav-less personal brand site: one vertical journey that snaps slide by
+slide, like paging through a deck.
 
 ```
-                        HOME
-              ↙          ↓          ↘
-Languages · Projects · Education · Experience · Papers · Contact
+Home → Education → Experience → Projects → Papers → Languages → Contact
 ```
+
+Scroll (one wheel gesture = one slide), swipe, or use ↑/↓ · PageUp/PageDown ·
+Home/End. Quiet chrome only: a slide counter bottom-left and a passive dot
+rail on the right. Every slide is deep-linkable (`#education`, `#papers`, …).
 
 Styled after a retro road-trip poster — warm cream paper (`#fff8f1`), one
 electric blue (`#006eff`), hairline dividers, serif display type — but alive:
-the name has a heartbeat, blurred blue clouds drift around, a particle field
-of slow embers floats by, the Home screen melts into blur at its edges, and
-glass buttons carry moving reflections. All of it respects
+the name has a heartbeat, blurred blue clouds drift and parallax behind the
+journey, a particle field of slow embers floats by, the hero melts into blur
+at its edges, glass buttons carry moving reflections, and each slide's
+content reveals in a staggered rise as it arrives. All of it respects
 `prefers-reduced-motion`.
 
 ## Run it

@@ -1,227 +1,171 @@
 /* ═══════════════════════════════════════════════════════════════════
-   HAMED — WORLD · game-style navigation, v2
-   Home floats on the upper floor. Below it, a strip of six rooms:
-   Languages · Projects · Education · Experience · Papers · Contact.
-   From Home you take one of three doors (↙ ↓ ↘). Down in the strip
-   you walk ← → between rooms, or head ↑ back up to Home.
-   Plus: particles, drifting blur, heartbeat — the map is alive.
+   HAMED MIRBAGHERI · nav-less slide deck
+   One vertical journey. CSS scroll-snap does the chunking; this file
+   choreographs the life: reveal animations as slides arrive, the
+   counter and dots, keyboard paging, ambient parallax, particles.
    ═══════════════════════════════════════════════════════════════════ */
 
 (() => {
   'use strict';
 
-  const world = document.getElementById('world');
-  const viewport = document.getElementById('viewport');
-  const minimap = document.getElementById('minimap');
+  const container = document.getElementById('slides');
+  const slides = [...document.querySelectorAll('.slide')];
+  const dotsWrap = document.getElementById('dots');
   const announcer = document.getElementById('announcer');
-  const sectorEl = document.getElementById('sector');
-  const sectorRoomEl = document.getElementById('sector-room');
+  const counterCurrent = document.getElementById('counter-current');
+  const counterTotal = document.getElementById('counter-total');
+  const counterTitle = document.getElementById('counter-title');
+  const blobs = document.querySelector('.fx-blobs');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // ── World model ───────────────────────────────────────────────────
-  const STRIP = ['languages', 'projects', 'education', 'experience', 'papers', 'contact'];
-  const HOME_COL = 3; // Home sits above the Experience room
+  const pad = (n) => String(n).padStart(2, '0');
+  counterTotal.textContent = pad(slides.length);
 
-  const rooms = {};
-  document.querySelectorAll('.room').forEach((el) => {
-    const id = el.dataset.room;
-    rooms[id] = {
-      id,
-      el,
-      title: el.dataset.title,
-      row: id === 'home' ? 0 : 1,
-      col: id === 'home' ? HOME_COL : STRIP.indexOf(id),
-    };
+  let activeIndex = 0;
+
+  // ── Progress dots ─────────────────────────────────────────────────
+  const dots = slides.map((slide, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'dot';
+    dot.setAttribute('aria-label', slide.dataset.title);
+    dot.addEventListener('click', () => scrollToSlide(i));
+    dotsWrap.appendChild(dot);
+    return dot;
   });
 
-  let current = rooms.home;
-
-  // What each room offers in each direction.
-  function exits(room) {
-    if (room.id === 'home') {
-      return {
-        left: STRIP[HOME_COL - 1],  // ↙ door
-        down: STRIP[HOME_COL],      // ↓ door
-        right: STRIP[HOME_COL + 1], // ↘ door
-        up: null,
-      };
-    }
-    const i = STRIP.indexOf(room.id);
-    return {
-      left: STRIP[i - 1] || null,
-      right: STRIP[i + 1] || null,
-      up: 'home',
-      down: null,
-    };
-  }
-
-  // ── Mini-map: lone Home cell up top, the strip below ─────────────
-  const mapCells = {};
-  for (let row = 0; row < 2; row++) {
-    for (let col = 0; col < STRIP.length; col++) {
-      const id = row === 0 ? (col === HOME_COL ? 'home' : null) : STRIP[col];
-      const btn = document.createElement('button');
-      btn.className = 'minimap-cell' + (id ? '' : ' is-empty');
-      if (id) {
-        btn.title = rooms[id].title;
-        btn.setAttribute('aria-label', `Go to ${rooms[id].title}`);
-        btn.addEventListener('click', () => goTo(id));
-        mapCells[id] = btn;
-      } else {
-        btn.tabIndex = -1;
-        btn.setAttribute('aria-hidden', 'true');
-      }
-      minimap.appendChild(btn);
-    }
-  }
-
-  // ── Room navigation: side doors + way up (strip rooms only) ──────
-  for (const id of STRIP) {
-    const room = rooms[id];
-    const e = exits(room);
-
-    if (e.left) {
-      room.el.appendChild(makeNav('left', '←', rooms[e.left].title, () => goTo(e.left)));
-    }
-    if (e.right) {
-      room.el.appendChild(makeNav('right', '→', rooms[e.right].title, () => goTo(e.right)));
-    }
-    room.el.appendChild(makeNav('up', '↑', 'Home', () => goTo('home')));
-  }
-
-  function makeNav(dir, arrow, label, onClick) {
-    const btn = document.createElement('button');
-    btn.className = `roomnav roomnav-${dir} ${dir === 'up' ? 'glass' : ''}`;
-    btn.setAttribute('aria-label', `Go to ${label}`);
-    if (dir === 'up') {
-      btn.innerHTML = `<span class="roomnav-arrow">${arrow}</span><span class="roomnav-label">${label}</span>`;
-    } else {
-      btn.innerHTML = `<span class="roomnav-circle glass">${arrow}</span><span class="roomnav-label">${label}</span>`;
-    }
-    btn.addEventListener('click', onClick);
-    return btn;
-  }
-
-  // Stagger the glass reflections so they don't flash in unison.
-  document.querySelectorAll('.glass').forEach((el, i) => {
-    el.style.setProperty('--sheen-delay', `${(i * 0.7) % 4.2}s`);
+  // ── Reveal choreography: stagger each slide's children ───────────
+  slides.forEach((slide) => {
+    slide.querySelectorAll('.reveal').forEach((el, i) => {
+      el.style.setProperty('--d', `${i * 0.14}s`);
+    });
   });
 
-  // ── Movement ──────────────────────────────────────────────────────
-  function goTo(id, { silent = false } = {}) {
-    const target = rooms[id];
-    if (!target || target === current) return false;
-    current = target;
-    render(silent);
-    if (!reducedMotion) travelZoom();
-    return true;
-  }
-
-  function move(dir) {
-    const id = exits(current)[dir];
-    if (id) return goTo(id);
-    bump(dir);
-    return false;
-  }
-
-  let zoomTimer;
-  function travelZoom() {
-    world.classList.add('traveling');
-    clearTimeout(zoomTimer);
-    zoomTimer = setTimeout(() => world.classList.remove('traveling'), 380);
-  }
-
-  function bump(dir) {
-    const cls = `bump-${dir}`;
-    viewport.classList.remove(cls);
-    void viewport.offsetWidth; // restart the animation
-    viewport.classList.add(cls);
-    setTimeout(() => viewport.classList.remove(cls), 400);
-  }
-
-  function render(silent = false) {
-    world.style.setProperty('--row', current.row);
-    world.style.setProperty('--col', current.col);
-
-    document.body.dataset.room = current.id;
-
-    for (const [id, btn] of Object.entries(mapCells)) {
-      btn.classList.toggle('is-current', id === current.id);
+  // Slides re-arm when they leave, so the choreography replays.
+  const revealObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      entry.target.classList.toggle('in-view', entry.isIntersecting);
     }
+  }, { root: container, threshold: 0.35 });
 
-    sectorEl.textContent = current.id === 'home' ? 'HQ' : `S${current.col + 1}`;
-    sectorRoomEl.textContent = current.title;
+  slides.forEach((s) => revealObserver.observe(s));
+
+  // Which slide owns the screen right now?
+  const activeObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      setActive(slides.indexOf(entry.target));
+    }
+  }, { root: container, threshold: 0.6 });
+
+  slides.forEach((s) => activeObserver.observe(s));
+
+  function setActive(index, silent = false) {
+    if (index === activeIndex && !silent) return;
+    activeIndex = index;
+    const slide = slides[index];
+
+    document.body.dataset.slide = slide.id;
+    dots.forEach((d, i) => d.classList.toggle('is-active', i === index));
+    counterCurrent.textContent = pad(index + 1);
+    counterTitle.textContent = slide.dataset.title;
+
+    // Ambient parallax: the blur clouds lag gently behind the journey.
+    if (!reducedMotion) {
+      blobs.style.setProperty('--parallax', `${index * -36}px`);
+    }
 
     if (!silent) {
-      announcer.textContent = `Now in: ${current.title}`;
-      history.replaceState(null, '', `#${current.id}`);
+      announcer.textContent = slide.dataset.title;
+      history.replaceState(null, '', `#${slide.id}`);
     }
   }
 
-  // ── Controls ──────────────────────────────────────────────────────
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-goto]');
-    if (btn) goTo(btn.dataset.goto);
-  });
+  // ── Keyboard: page through the deck in chunks ─────────────────────
+  function scrollToSlide(i) {
+    const clamped = Math.max(0, Math.min(slides.length - 1, i));
+    slides[clamped].scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
+  }
 
-  const KEYMAP = {
-    ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
-    w: 'up', s: 'down', a: 'left', d: 'right',
-    W: 'up', S: 'down', A: 'left', D: 'right',
-  };
+  const NEXT_KEYS = new Set(['ArrowDown', 'PageDown', ' ', 's', 'S', 'j', 'J']);
+  const PREV_KEYS = new Set(['ArrowUp', 'PageUp', 'w', 'W', 'k', 'K']);
 
   document.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const tag = document.activeElement?.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    const dir = KEYMAP[e.key];
-    if (!dir) return;
-    e.preventDefault();
-    move(dir);
+
+    if (NEXT_KEYS.has(e.key)) { e.preventDefault(); scrollToSlide(activeIndex + 1); }
+    else if (PREV_KEYS.has(e.key)) { e.preventDefault(); scrollToSlide(activeIndex - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); scrollToSlide(0); }
+    else if (e.key === 'End') { e.preventDefault(); scrollToSlide(slides.length - 1); }
   });
 
-  // Swipes: horizontal walks the strip (or takes a side door from Home);
-  // a decisive vertical swipe goes down from Home / back up from the strip.
-  let touchX = null, touchY = null;
-  document.addEventListener('touchstart', (e) => {
-    touchX = e.touches[0].clientX;
-    touchY = e.touches[0].clientY;
-  }, { passive: true });
+  // ── Wheel chunking: one gesture, one slide ────────────────────────
+  // CSS snap alone lets small wheel scrolls fall back to the current
+  // slide. Instead: accumulate deltas, and once a gesture is decisive,
+  // commit to a full slide (or page through a slide taller than the
+  // viewport before leaving it).
+  let wheelAcc = 0;
+  let wheelResetTimer;
+  let animLock = false;
 
-  document.addEventListener('touchend', (e) => {
-    if (touchX === null) return;
-    const dx = e.changedTouches[0].clientX - touchX;
-    const dy = e.changedTouches[0].clientY - touchY;
-    touchX = touchY = null;
-    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      move(dx < 0 ? 'right' : 'left');
-    } else if (current.id === 'home' && dy < -90 && Math.abs(dy) > Math.abs(dx) * 1.5) {
-      move('down'); // swipe up on Home dives into the strip
-    }
-  }, { passive: true });
-
-  // ── Deep links: #education, #papers, … ───────────────────────────
-  function syncFromHash(silent) {
-    const id = location.hash.slice(1);
-    if (rooms[id]) goTo(id, { silent });
+  function lock() {
+    animLock = true;
+    setTimeout(() => { animLock = false; }, 850);
   }
 
-  window.addEventListener('hashchange', () => syncFromHash(false));
+  container.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (animLock) return;
 
-  syncFromHash(true);
-  render(true);
+    wheelAcc += e.deltaY;
+    clearTimeout(wheelResetTimer);
+    wheelResetTimer = setTimeout(() => { wheelAcc = 0; }, 200);
+    if (Math.abs(wheelAcc) < 50) return;
+
+    const dir = wheelAcc > 0 ? 1 : -1;
+    wheelAcc = 0;
+
+    // If the current slide overflows the viewport, walk through it first.
+    const rect = slides[activeIndex].getBoundingClientRect();
+    if (dir > 0 && rect.bottom > window.innerHeight + 8) {
+      container.scrollBy({ top: window.innerHeight * 0.85, behavior: reducedMotion ? 'auto' : 'smooth' });
+    } else if (dir < 0 && rect.top < -8) {
+      container.scrollBy({ top: -window.innerHeight * 0.85, behavior: reducedMotion ? 'auto' : 'smooth' });
+    } else {
+      scrollToSlide(activeIndex + dir);
+    }
+    lock();
+  }, { passive: false });
+
+  // ── Deep links: #education, #papers, … ───────────────────────────
+  function syncFromHash() {
+    const i = slides.findIndex((s) => s.id === location.hash.slice(1));
+    if (i >= 0) {
+      slides[i].scrollIntoView({ behavior: 'auto' });
+      setActive(i, true);
+    }
+  }
+
+  window.addEventListener('hashchange', () => {
+    const i = slides.findIndex((s) => s.id === location.hash.slice(1));
+    if (i >= 0) scrollToSlide(i);
+  });
+
+  syncFromHash();
+  setActive(activeIndex, true);
 
   // ══════════════════ Particles: slow blue embers ══════════════════
   if (!reducedMotion) {
     const canvas = document.getElementById('particles');
     const ctx = canvas.getContext('2d');
-    let W, H, dots;
+    let W, H, dotsField;
 
     function seed() {
       W = canvas.width = window.innerWidth * devicePixelRatio;
       H = canvas.height = window.innerHeight * devicePixelRatio;
       const count = Math.min(64, Math.floor(window.innerWidth / 24));
-      dots = Array.from({ length: count }, () => ({
+      dotsField = Array.from({ length: count }, () => ({
         x: Math.random() * W,
         y: Math.random() * H,
         r: (Math.random() * 1.8 + 0.8) * devicePixelRatio,
@@ -234,7 +178,7 @@
 
     function tick(t) {
       ctx.clearRect(0, 0, W, H);
-      for (const d of dots) {
+      for (const d of dotsField) {
         d.y -= d.vy;
         const x = d.x + Math.sin(t / 2400 + d.phase) * 18 * d.sway * devicePixelRatio;
         if (d.y < -10) { d.y = H + 10; d.x = Math.random() * W; }
@@ -250,4 +194,9 @@
     window.addEventListener('resize', seed);
     requestAnimationFrame(tick);
   }
+
+  // Stagger the glass reflections so they don't flash in unison.
+  document.querySelectorAll('.glass').forEach((el, i) => {
+    el.style.setProperty('--sheen-delay', `${(i * 0.7) % 4.2}s`);
+  });
 })();

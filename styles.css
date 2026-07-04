@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════
-   HAMED — WORLD · retro road-trip poster on warm paper, but alive
-   Cream canvas, one electric blue, hairline dividers — now with a
-   heartbeat, drifting blur, particles and glass doors.
+   HAMED MIRBAGHERI · retro road-trip poster on warm paper, alive
+   Nav-less. One vertical journey, snapping slide by slide.
+   Cream canvas, one electric blue, hairline dividers — with a
+   heartbeat, drifting blur, particles and glass.
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -29,10 +30,10 @@
   /* Shape & rhythm */
   --radius-pill: 60px;
   --hairline: 1.5px solid var(--color-ash);
-  --room-pad: clamp(24px, 6vw, 144px);
+  --slide-pad: clamp(24px, 6vw, 144px);
 
   /* Motion */
-  --glide: 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  --reveal-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -66,7 +67,14 @@ body {
 /* ══════════════════════ Ambient life ══════════════════════ */
 
 /* Drifting blurred blue clouds behind everything */
-.fx-blobs { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.fx-blobs {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  transform: translateY(var(--parallax, 0px));
+  transition: transform 900ms var(--reveal-ease);
+}
 
 .blob {
   position: absolute;
@@ -107,70 +115,67 @@ body {
   transition: opacity 700ms ease;
 }
 
-body[data-room="home"] .edge-blur { opacity: 1; }
+body[data-slide="home"] .edge-blur { opacity: 1; }
 
-/* ══════════════════════ The world & rooms ══════════════════════ */
+/* ══════════════════════ The slide deck ══════════════════════ */
 
-.viewport {
+.slides {
   position: fixed;
   inset: 0;
   z-index: 2;
-  overflow: hidden;
-}
-
-.world {
-  display: grid;
-  grid-template-columns: repeat(6, 100vw);
-  grid-template-rows: repeat(2, 100vh);
-  grid-template-rows: repeat(2, 100dvh);
-  width: 600vw;
-  transform: translate(calc(var(--col, 3) * -100vw), calc(var(--row, 0) * -100dvh)) scale(var(--zoom, 1));
-  transition: transform var(--glide);
-  will-change: transform;
-}
-
-@supports not (height: 100dvh) {
-  .world { transform: translate(calc(var(--col, 3) * -100vw), calc(var(--row, 0) * -100vh)) scale(var(--zoom, 1)); }
-}
-
-.world.traveling { --zoom: 0.965; }
-
-/* Upper floor: Home sits above the Experience room */
-.room[data-room="home"]       { grid-area: 1 / 4; }
-.room[data-room="languages"]  { grid-area: 2 / 1; }
-.room[data-room="projects"]   { grid-area: 2 / 2; }
-.room[data-room="education"]  { grid-area: 2 / 3; }
-.room[data-room="experience"] { grid-area: 2 / 4; }
-.room[data-room="papers"]     { grid-area: 2 / 5; }
-.room[data-room="contact"]    { grid-area: 2 / 6; }
-
-.room {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
-  border: 0.75px solid var(--color-ash);
-  background: transparent; /* the living background shows through */
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* the dots tell you where you are */
 }
 
-.room-inner {
+.slides::-webkit-scrollbar { display: none; }
+
+.slide {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  border-bottom: var(--hairline);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.slide-inner {
+  width: 100%;
   max-width: 720px;
   margin: 0 auto;
-  padding: clamp(96px, 15vh, 150px) var(--room-pad) clamp(110px, 18vh, 160px);
+  padding: clamp(90px, 14vh, 140px) var(--slide-pad);
 }
 
-.room-inner-center {
-  min-height: 100%;
+.slide-inner-center {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   text-align: center;
   gap: 20px;
-  padding-top: 110px;
-  padding-bottom: 120px;
+}
+
+/* ══════════════════════ Reveal choreography ══════════════════════ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(44px);
+  filter: blur(8px);
+  transition:
+    opacity 800ms ease var(--d, 0s),
+    transform 900ms var(--reveal-ease) var(--d, 0s),
+    filter 800ms ease var(--d, 0s);
+  will-change: opacity, transform, filter;
+}
+
+.slide.in-view .reveal {
+  opacity: 1;
+  transform: none;
+  filter: none;
 }
 
 /* ══════════════════════ Hero ══════════════════════ */
@@ -189,16 +194,16 @@ body[data-room="home"] .edge-blur { opacity: 1; }
   position: absolute;
   top: 50%; left: 50%;
   width: 140%;
-  height: 120%;
-  transform: translate(-50%, -54%);
+  height: 130%;
+  transform: translate(-50%, -50%);
   background: radial-gradient(closest-side, rgba(255, 248, 241, 0.95) 30%, rgba(0, 110, 255, 0.06) 62%, transparent 100%);
   z-index: -1;
   animation: halo 5.6s ease-in-out infinite;
 }
 
 @keyframes halo {
-  0%, 100% { opacity: 0.8; transform: translate(-50%, -54%) scale(1); }
-  50%      { opacity: 1;   transform: translate(-50%, -54%) scale(1.06); }
+  0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.06); }
 }
 
 .hero-name {
@@ -208,11 +213,14 @@ body[data-room="home"] .edge-blur { opacity: 1; }
   line-height: 0.92;
   letter-spacing: -0.02em;
   color: var(--color-blue);
-  animation: heartbeat 2.8s ease-in-out infinite;
-  transform-origin: center;
 }
 
-/* Lub-dub. Subtle, but alive. */
+/* Lub-dub. Subtle, but alive. (On a wrapper animation so the
+   reveal transition owns the transform property unchallenged.) */
+.slide.in-view .hero-name {
+  animation: heartbeat 2.8s ease-in-out 1s infinite;
+}
+
 @keyframes heartbeat {
   0%, 34%, 100% { transform: scale(1); }
   8%            { transform: scale(1.022); }
@@ -226,50 +234,41 @@ body[data-room="home"] .edge-blur { opacity: 1; }
   max-width: 480px;
 }
 
-.hero-hint {
-  font-weight: 400;
-  font-size: var(--text-label);
-  color: var(--color-blue);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.75;
-  margin-top: 7px;
-}
-
-/* The three doors, fanned around the name */
-.fan {
-  display: flex;
-  align-items: flex-start;
-  gap: clamp(14px, 3vw, 35px);
-  margin-top: 20px;
-}
-
-.fan-btn {
+/* Scroll invitation */
+.scroll-hint {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 16px 32px;
-  border-radius: var(--radius-pill);
-  border: 1.5px solid var(--glass-edge);
+  gap: 7px;
   color: var(--color-blue);
-  font-family: var(--font-sans);
-  cursor: pointer;
-  transition: transform 250ms ease, background-color 250ms ease;
+  animation: bob 2.2s ease-in-out infinite;
 }
 
-.fan-btn-center { transform: translateY(22px); }
+.scroll-hint-circle {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1.5px solid var(--glass-edge);
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: 300;
+}
 
-.fan-btn:hover, .fan-btn:focus-visible { transform: translateY(-3px) scale(1.04); }
-.fan-btn-center:hover, .fan-btn-center:focus-visible { transform: translateY(19px) scale(1.04); }
-
-.fan-arrow { font-size: 22px; line-height: 1; font-weight: 300; }
-
-.fan-label {
+.scroll-hint-label {
   font-weight: 500;
-  font-size: var(--text-label);
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
+}
+
+@keyframes bob {
+  0%, 100% { transform: translate(-50%, 0); }
+  50%      { transform: translate(-50%, 9px); }
 }
 
 /* ══════════════════════ Glass ══════════════════════ */
@@ -312,7 +311,7 @@ body[data-room="home"] .edge-blur { opacity: 1; }
   margin-bottom: clamp(48px, 9vh, 88px);
 }
 
-.room-inner-center .opener { margin-bottom: 0; }
+.slide-inner-center .opener { margin-bottom: 0; }
 
 .body-copy {
   max-width: 600px;
@@ -393,61 +392,7 @@ body[data-room="home"] .edge-blur { opacity: 1; }
   margin-top: 20px;
 }
 
-/* ══════════ Room navigation: side doors + way up (injected) ══════════ */
-
-.roomnav {
-  position: absolute;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-blue);
-  font-family: var(--font-sans);
-}
-
-.roomnav-circle {
-  display: grid;
-  place-items: center;
-  width: 60px;
-  height: 60px;
-  border: 1.5px solid var(--glass-edge);
-  border-radius: 50%;
-  font-size: 22px;
-  font-weight: 300;
-  color: var(--color-blue);
-  transition: transform 250ms ease;
-}
-
-.roomnav:hover .roomnav-circle, .roomnav:focus-visible .roomnav-circle { transform: scale(1.1); }
-
-.roomnav-label {
-  font-weight: 500;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.roomnav-left  { left: clamp(10px, 2.5vw, 43px); top: 50%; transform: translateY(-50%); }
-.roomnav-right { right: clamp(10px, 2.5vw, 43px); top: 50%; transform: translateY(-50%); }
-
-.roomnav-up {
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  flex-direction: row;
-  gap: 11px;
-  padding: 10px 24px;
-  border: 1.5px solid var(--glass-edge);
-  border-radius: var(--radius-pill);
-}
-
-.roomnav-up .roomnav-label { font-size: var(--text-label); }
-
-/* ══════════════════════ HUD ══════════════════════ */
+/* ══════════════════════ Quiet chrome ══════════════════════ */
 
 .hud {
   position: fixed;
@@ -472,54 +417,28 @@ body[data-room="home"] .edge-blur { opacity: 1; }
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--color-blue);
-  text-decoration: none;
 }
 
-/* Mini-map: one cell up top (Home), the strip below */
-.minimap {
-  display: grid;
-  grid-template-columns: repeat(6, 15px);
-  grid-template-rows: repeat(2, 15px);
-  gap: 3px;
-}
-
-.minimap-cell {
-  border: 1px solid var(--color-ash);
-  background: rgba(255, 255, 255, 0.4);
-  padding: 0;
-  cursor: pointer;
-  border-radius: 0;
-  transition: border-color 200ms ease, background-color 200ms ease;
-}
-
-.minimap-cell:hover { border-color: var(--color-blue); }
-.minimap-cell.is-empty { visibility: hidden; }
-.minimap-cell.is-current { background: var(--color-blue); border-color: var(--color-blue); }
-
-/* Sector readout */
-.sector {
+/* Slide counter */
+.counter {
   display: flex;
   align-items: baseline;
-  gap: 11px;
+  gap: 7px;
   font-weight: 400;
-}
-
-.sector-label {
-  font-size: var(--text-label);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
   color: var(--color-blue);
 }
 
-.sector-value {
+.counter-current {
   font-family: var(--font-serif);
   font-weight: 500;
   font-size: 28px;
-  color: var(--color-blue);
   line-height: 1;
 }
 
-.sector-room {
+.counter-sep, .counter-total { font-size: var(--text-label); opacity: 0.7; }
+
+.counter-title {
+  margin-left: 7px;
   font-size: var(--text-label);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -530,52 +449,59 @@ body[data-room="home"] .edge-blur { opacity: 1; }
   font-weight: 400;
   font-size: var(--text-label);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   color: var(--color-blue);
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
-/* ══════════════════════ Edge bump ══════════════════════ */
+/* Progress dots — quiet, on the right edge */
+.dots {
+  position: fixed;
+  right: clamp(14px, 2vw, 29px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
 
-@keyframes bump-x { 30% { transform: translateX(var(--bump, 10px)); } 100% { transform: none; } }
-@keyframes bump-y { 30% { transform: translateY(var(--bump, 10px)); } 100% { transform: none; } }
+.dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 1.5px solid var(--color-blue);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 250ms ease, transform 250ms ease, background-color 250ms ease;
+}
 
-.viewport.bump-left  { --bump: 14px;  animation: bump-x 350ms ease; }
-.viewport.bump-right { --bump: -14px; animation: bump-x 350ms ease; }
-.viewport.bump-up    { --bump: 14px;  animation: bump-y 350ms ease; }
-.viewport.bump-down  { --bump: -14px; animation: bump-y 350ms ease; }
+.dot:hover { opacity: 0.8; }
+
+.dot.is-active {
+  background: var(--color-blue);
+  opacity: 1;
+  transform: scale(1.35);
+}
 
 /* ══════════════════════ Small screens ══════════════════════ */
 
 @media (max-width: 720px) {
   .keys-hint { display: none; }
-  .sector-room { display: none; }
-
-  .fan { flex-wrap: wrap; justify-content: center; }
-  .fan-btn { padding: 12px 22px; }
-  .fan-btn-center { transform: none; }
-  .fan-btn-center:hover, .fan-btn-center:focus-visible { transform: translateY(-3px) scale(1.04); }
-
-  .roomnav-circle { width: 52px; height: 52px; font-size: 18px; }
-  .roomnav-label { display: none; }
-  .roomnav-up .roomnav-label { display: inline; }
-  .roomnav-up { top: 64px; }
-
-  /* Dock side doors in the bottom corners, clear of the text column */
-  .roomnav-left  { top: auto; bottom: 24px; transform: none; }
-  .roomnav-right { top: auto; bottom: 24px; transform: none; }
-
-  /* …and center the sector readout so the corners stay free */
-  .hud-bottom { justify-content: center; }
-
+  .counter-title { display: none; }
   .blob { filter: blur(60px); }
+  .scroll-hint-circle { width: 46px; height: 46px; }
 }
 
 /* ══════════════════════ Reduced motion ══════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
-  .world { transition: none; }
-  .viewport { animation: none !important; }
-  .blob, .hero-name, .hero::before, .glass::after { animation: none !important; }
+  .slides { scroll-behavior: auto; }
+  .blob, .hero::before, .glass::after, .scroll-hint,
+  .slide.in-view .hero-name { animation: none !important; }
   #particles { display: none; }
+  .reveal { opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important; }
+  .fx-blobs { transition: none; }
 }
