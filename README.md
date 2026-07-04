@@ -2,19 +2,24 @@
 
 A personal brand site that plays like a game, not a website.
 
-The page is a **3×3 map of rooms**. You start at Home in the center and steer
-with the arrow keys, WASD, the on-screen D-pad, the mini-map, or the signposts
-at the edge of each room. Every room is deep-linkable (`#education`, `#papers`, …).
+Home floats on an upper floor with three glass doors fanned around the name
+(↙ ↓ ↘). Below it is a strip of six rooms you walk through left/right, with a
+door back up to Home from any of them. Steer with arrow keys, WASD, the glass
+doors, the mini-map, or swipes. Every room is deep-linkable
+(`#education`, `#papers`, …).
 
 ```
-Languages    Education    (uncharted)
-Projects       HOME         Papers
-(uncharted)  Experience    Contact
+                        HOME
+              ↙          ↓          ↘
+Languages · Projects · Education · Experience · Papers · Contact
 ```
 
-Styled after a retro road-trip poster: warm cream paper (`#fff8f1`), one
-electric blue (`#006eff`), hairline dividers, thin serif display type, no
-shadows, no gradients, outlined pill buttons only.
+Styled after a retro road-trip poster — warm cream paper (`#fff8f1`), one
+electric blue (`#006eff`), hairline dividers, serif display type — but alive:
+the name has a heartbeat, blurred blue clouds drift around, a particle field
+of slow embers floats by, the Home screen melts into blur at its edges, and
+glass buttons carry moving reflections. All of it respects
+`prefers-reduced-motion`.
 
 ## Run it
 
